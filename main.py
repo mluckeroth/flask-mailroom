@@ -3,7 +3,7 @@ import base64
 
 from flask import Flask, render_template, request, redirect, url_for, session
 
-from model import Donation 
+from model import Donation, Donor
 
 app = Flask(__name__)
 
@@ -15,7 +15,26 @@ def home():
 def all():
     donations = Donation.select()
     return render_template('donations.jinja2', donations=donations)
-    
+
+@app.route('/create', methods=['GET', 'POST'])
+def create():
+
+    if request.method == 'GET':
+        return render_template('create.jinja2')
+
+    if request.method == 'POST':
+        name = request.form['name']
+        donation = int(request.form['donation'])
+
+        try:
+            donor = Donor.get(Donor.name == name)
+            new_donation = Donation(value=donation, donor=donor)
+            new_donation.save()
+        except Donor.DoesNotExist:
+            return render_template('create.jinja2', error="Donor name not found.")
+
+        return redirect(url_for('all'))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 6738))
